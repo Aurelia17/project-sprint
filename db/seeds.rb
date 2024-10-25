@@ -1,51 +1,42 @@
-require "open-uri"
+require "open-uri" # to be able to use the class URI used for fetching the flats informations
 
 puts "cleaning DB..."
-User.destroy_all # Destroy all existing users from database to avoid duplicates
-Flat.destroy_all # Destroy all existing flats from database to avoid duplicates
+# Destroy all the users in the database to make sure we are not duplicating it
+User.destroy_all
+# Destroy all the flats in the database to make sure we are not duplicating it
+Flat.destroy_all
 
-# Creating a new user
-User.create!(
-            email: 'test@test.com',
-            password: '123456',
-            password_confirmation: '123456')
-puts "User 1 created !"
+# Create the user
+user = User.new(
+  email: 'test@test.com',
+  password: '123456',
+  password_confirmation: '123456'
+)
+# Save the user in the database
+user.save!
+puts "User 1 created!"
 
 puts "Creating flats..."
+
+
 url = "https://raw.githubusercontent.com/lewagon/flats-boilerplate/master/flats.json"
-flats = JSON.parse(URI(url).read)
+# Storing the informations of the Json file in a variable called flats, each object will be a flat
+flats = JSON.parse(URI.open(url).read)
 
-# 5.times do
-#   flats.each do |flat|
-#     flat = Flat.new(
-#       name: flat['name'],
-#       price: flat['price'],
-#       address: "Paris, France"
-#     )
-#   image = URI.open("#{flat['imageUrl']}")
-#   filename = (100..9999999).random.to_s
-#   flat.photo.attach(io: image, filename: filename, content_type: 'image/png')
-#   flat.save!
-#   end
-# end
-
-
-flats.each do |flat|
-  begin
-    flat_record = Flat.new(
-      name: flat['name'],
-      price: flat['price'],
+# repeting 5 times the folowing code
+5.times do
+  flats.each do |flat_data|  # Use flat_data to avoid confusion
+    flat = Flat.new(
+      name: flat_data['name'],
+      price: flat_data['price'],
       address: "Paris, France"
     )
 
-    image_url = flat['imageUrl']
-    puts "Image URL: #{image_url}" # Log the URL to check
+    image_url = flat_data['imageUrl']
     image = URI.open(image_url)
-    filename = File.basename(image_url) # Get the filename from the URL
-
-    flat_record.photo.attach(io: image, filename: filename, content_type: 'image/png')
-    flat_record.save!
-  rescue => e
-    puts "Error processing flat #{flat['name']}: #{e.message}"
+    filename = "#{rand(99..999999)}.png"
+    flat.photo.attach(io: image, filename: filename, content_type: 'image/png')
+    flat.save!
+    puts "#{flat.name} has been created"
   end
 end
